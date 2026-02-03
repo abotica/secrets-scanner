@@ -22,6 +22,16 @@ function History({ history, loadHistoryItem }: HistoryProps) {
 		return date.toLocaleDateString();
 	};
 
+	if (history.length === 0) {
+		return (
+			<div className='space-y-6 px-4'>
+				<div className='border border-gray-200 rounded-none p-12 text-center'>
+					<p className='text-gray-500 text-sm'>No activity yet. Start by scanning a repository or uploading a file.</p>
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		<div className='space-y-6 px-4'>
 			<div className='border border-gray-200 rounded-none'>

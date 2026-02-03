@@ -220,12 +220,10 @@ function App() {
 								{APP_CONFIG.ui.historyView.title}
 							</h1>
 						</div>
-						{history.length > 0 && (
-							<History
-								history={history}
-								loadHistoryItem={loadHistoryItem}
-							/>
-						)}
+						<History
+							history={history}
+							loadHistoryItem={loadHistoryItem}
+						/>
 					</motion.div>
 				)}
 			</AnimatePresence>
