@@ -7,4 +7,6 @@ dependencies = [
     "requests>=2.31.0",
     "gitpython>=3.1.40",
     "gunicorn>=21.0.0",
+    "flask-cors",
+    "google-genai"
 ]

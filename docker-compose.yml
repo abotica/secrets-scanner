@@ -9,18 +9,33 @@ services:
 
   orchestrator:
     build: ./orchestrator
+    command: gunicorn -w 1 -b 0.0.0.0:8000 app:app
     container_name: secrets-orchestrator
     ports:
       - "8000:8000"
-    environment:
-      - SCANNER_URL=http://scanner:8001
+    env_file:
+      - .env
     volumes:
       - ./test-repos:/repos:ro
+      - ./scan_data:/app/data
     depends_on:
       - scanner
     networks:
       - secrets-net
+  
+  frontend:
+    build: ./frontend
+    container_name: secrets-frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - orchestrator
+    env_file:
+      - .env
 
 networks:
   secrets-net:
     driver: bridge
+
+volumes:
+  scan_data:

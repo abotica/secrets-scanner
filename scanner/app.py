@@ -15,6 +15,12 @@ DETECTORS = {
     "private_key_openssh": r'-----BEGIN OPENSSH PRIVATE KEY-----',
     "private_key_dsa": r'-----BEGIN DSA PRIVATE KEY-----',
     "private_key_ec": r'-----BEGIN EC PRIVATE KEY-----',
+    "google_api_key": r'AIza[0-9A-Za-z\\-_]{35}',
+    "slack_token": r'xox[baprs]-([0-9a-zA-Z]{10,48})?',
+    "stripe_key": r'(sk|pk)_(test|live)_[0-9a-zA-Z]{24}',
+    "pypi_token": r'pypi-[0-9a-zA-Z]{100,}',
+    "db_connection_string": r'(postgres|mysql|mongodb|redis)://[a-zA-Z0-9_]+:[a-zA-Z0-9_]+@[a-zA-Z0-9_.-]+',
+    "generic_password": r'(password|passwd|pwd|secret|api_key|access_token)[\s]*[:=]+[\s]*["\'][a-zA-Z0-9@#$%^&+=]{8,}["\']'
 }
 
 # Entropy thresholds

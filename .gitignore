@@ -11,3 +11,22 @@ dist/
 build/
 .DS_Store
 .env
+scan_data/
+
+# Frontend
+/frontend/logs
+/frontend/*.log
+/frontend/npm-debug.log*
+/frontend/yarn-debug.log*
+/frontend/yarn-error.log*
+/frontend/pnpm-debug.log*
+/frontend/lerna-debug.log*
+
+/frontend/node_modules
+/frontend/dist
+/frontend/dist-ssr
+/frontend/.vite
+/frontend/*.local
+/frontend/.env
+/frontend/.env.*
+test-repos/*/secrets.txt
