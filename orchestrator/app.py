@@ -3,7 +3,6 @@ import tempfile
 import shutil
 from multiprocessing import Pool
 from pathlib import Path
-import threading
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import sqlite3
@@ -34,23 +33,18 @@ if not os.path.exists(DATA_DIR):
     os.makedirs(DATA_DIR, exist_ok=True)
 
 # --- DATABASE HELPERS ---
-_db_initialized = False
-_db_lock = threading.Lock()
-    
 def get_db_connection():
-    """Get a database connection with proper settings for concurrent access."""
+    """Get a database connection with proper settings."""
     conn = sqlite3.connect(DB_PATH, timeout=30)
-    conn.execute("PRAGMA journal_mode=WAL")  # Better concurrent access
+    conn.execute("PRAGMA journal_mode=WAL")
     return conn
 
 def init_db():
     """Initialize the SQLite database."""
-    # Ensure data directory exists
     os.makedirs(DATA_DIR, exist_ok=True)
     
     conn = get_db_connection()
     c = conn.cursor()
-    # Create table if not exists
     c.execute('''
         CREATE TABLE IF NOT EXISTS history (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -64,12 +58,8 @@ def init_db():
     conn.commit()
     conn.close()
 
-@app.before_request
-def ensure_db_initialized():
-    global _db_initialized
-    if not _db_initialized:
-        init_db()
-        _db_initialized = True
+# Initialize DB at module load (before Gunicorn forks workers with --preload)
+init_db()
 
 def save_scan_to_history(scan_type, target, result_dict):
     """Save a finished scan to the DB."""
