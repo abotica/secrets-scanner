@@ -189,6 +189,11 @@ def scan_local_path(local_path: str, scanner_url: str) -> dict:
     with Pool(processes=MAX_WORKERS) as pool:
         results = pool.map(scan_file, scan_args)
 
+    # Strip the base path from filenames to show relative paths only
+    for result in results:
+        if 'filename' in result:
+            result['filename'] = str(Path(result['filename']).relative_to(repo_path))
+
     # Aggregate results
     files_with_secrets = [r for r in results if r.get('has_secrets', False)]
     files_with_errors = sum(1 for r in results if 'error' in r)
