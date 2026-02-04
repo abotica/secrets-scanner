@@ -8,7 +8,11 @@ interface HistoryProps {
 
 function History({ history, loadHistoryItem }: HistoryProps) {
 	const formatDate = (timestamp: string) => {
-		const date = new Date(timestamp);
+		// Append 'Z' to treat the timestamp as UTC if it doesn't have timezone info
+		const utcTimestamp = timestamp.includes('Z') || timestamp.includes('+') 
+			? timestamp 
+			: timestamp + 'Z';
+		const date = new Date(utcTimestamp);
 		const now = new Date();
 		const diffMs = now.getTime() - date.getTime();
 		const diffMins = Math.floor(diffMs / 60000);

@@ -9,7 +9,7 @@ services:
 
   orchestrator:
     build: ./orchestrator
-    command: gunicorn -w 1 -b 0.0.0.0:8000 app:app
+    # command: gunicorn -w 1 -b 0.0.0.0:8000 app:app
     container_name: secrets-orchestrator
     ports:
       - "8000:8000"
@@ -17,7 +17,7 @@ services:
       - .env
     volumes:
       - ./test-repos:/repos:ro
-      - ./scan_data:/app/data
+      - scan_data:/app/data
     depends_on:
       - scanner
     networks:
@@ -32,6 +32,8 @@ services:
       - orchestrator
     env_file:
       - .env
+    networks:
+      - secrets-net
 
 networks:
   secrets-net:

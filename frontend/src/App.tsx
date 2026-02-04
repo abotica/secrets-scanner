@@ -89,8 +89,12 @@ function App() {
 				github_token: token,
 			});
 			setResults(response.data);
-		} catch (err) {
-			setError(err instanceof Error ? err.message : 'Unknown error');
+		} catch (err: any) {
+			if (err.response?.data?.error) {
+				setError(err.response.data.error);
+			} else {
+				setError(err instanceof Error ? err.message : 'Unknown error');
+			}
 		} finally {
 			setLoading(false);
 			fetchHistory();
@@ -137,15 +141,14 @@ function App() {
 
 	// Function to fetch history
 	const fetchHistory = async () => {
-		setError(null);
-
 		try {
 			const res = await axios.get(`${APP_CONFIG.api.baseUrl}${APP_CONFIG.api.endpoints.history}`);
 			console.log('Fetched history:', res.data);
 			setHistory(res.data);
 		} catch (e) {
 			console.error('Failed to load history', e);
-			setError('Failed to load scan history');
+			// Don't overwrite existing errors
+			setError((prev) => prev || 'Failed to load scan history');
 		}
 	};
 

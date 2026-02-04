@@ -3,6 +3,7 @@ import tempfile
 import shutil
 from multiprocessing import Pool
 from pathlib import Path
+import threading
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import sqlite3
@@ -11,6 +12,7 @@ from datetime import datetime
 
 import requests
 from git import Repo
+from git.exc import GitCommandError
 from google import genai
 
 app = Flask(__name__)
@@ -32,9 +34,21 @@ if not os.path.exists(DATA_DIR):
     os.makedirs(DATA_DIR, exist_ok=True)
 
 # --- DATABASE HELPERS ---
+_db_initialized = False
+_db_lock = threading.Lock()
+    
+def get_db_connection():
+    """Get a database connection with proper settings for concurrent access."""
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    conn.execute("PRAGMA journal_mode=WAL")  # Better concurrent access
+    return conn
+
 def init_db():
     """Initialize the SQLite database."""
-    conn = sqlite3.connect(DB_PATH)
+    # Ensure data directory exists
+    os.makedirs(DATA_DIR, exist_ok=True)
+    
+    conn = get_db_connection()
     c = conn.cursor()
     # Create table if not exists
     c.execute('''
@@ -43,19 +57,24 @@ def init_db():
             timestamp TEXT,
             scan_type TEXT,
             target TEXT,
-            summary TEXT,    -- JSON string of summary counts
-            full_result TEXT -- JSON string of the entire result
+            summary TEXT,
+            full_result TEXT
         )
     ''')
     conn.commit()
     conn.close()
 
-init_db()
+@app.before_request
+def ensure_db_initialized():
+    global _db_initialized
+    if not _db_initialized:
+        init_db()
+        _db_initialized = True
 
 def save_scan_to_history(scan_type, target, result_dict):
     """Save a finished scan to the DB."""
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db_connection()
         c = conn.cursor()
         
         # We save the summary separately for easy display in the list
@@ -95,7 +114,7 @@ DATA DETECTED:
 {str(limited_findings)}
 
 TASK:
-Generate a concise professional report in Markdown format. Be brief and focus only on the most critical information. Use clear headings and short paragraphs instead of numbered lists.
+Generate a concise professional report in Markdown format. Be brief and focus only on the most critical information. Use clear headings and short paragraphs instead of numbered lists. Never show raw secrets in the report.
 
 CONTENT:
 - **Executive Summary**: One sentence describing the severity and scope.
@@ -216,6 +235,9 @@ def clone_and_scan_repo(repo_url: str, scanner_url: str) -> dict:
         result.pop('path', None)
         return result
 
+    except GitCommandError as e:
+        raise PermissionError("This is a private repository or does not exist. Provide a GitHub token or check URL.")
+
     finally:
         # Cleanup
         shutil.rmtree(temp_dir, ignore_errors=True)
@@ -271,6 +293,8 @@ def scan_repo():
         save_scan_to_history('git', repo_url, result)
         return jsonify(result), 200
 
+    except PermissionError as e:
+        return jsonify({"error": str(e)}), 401
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -346,7 +370,7 @@ def scan_upload():
 @app.route('/scan-history', methods=['GET'])
 def get_history():
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db_connection()
         # Return results as dictionary
         conn.row_factory = sqlite3.Row 
         c = conn.cursor()
